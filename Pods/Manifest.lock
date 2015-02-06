@@ -1,0 +1,12 @@
+PODS:
+  - NSLogger (1.5.1):
+    - NSLogger/Standard (= 1.5.1)
+  - NSLogger/Standard (1.5.1)
+
+DEPENDENCIES:
+  - NSLogger (~> 1.5)
+
+SPEC CHECKSUMS:
+  NSLogger: 7421a0a60df62fb8ff548cd0388c302d3329a322
+
+COCOAPODS: 0.35.0
