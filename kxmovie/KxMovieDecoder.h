@@ -11,6 +11,7 @@
 
 #import <Foundation/Foundation.h>
 #import <CoreGraphics/CoreGraphics.h>
+//#import "StreamInfoContainer.h"
 
 extern NSString * kxmovieErrorDomain;
 
@@ -85,7 +86,7 @@ typedef enum {
 typedef BOOL(^KxMovieDecoderInterruptCallback)();
 
 @interface KxMovieDecoder : NSObject
-
++ (NSUInteger *) streamWidth;
 @property (readonly, nonatomic, strong) NSString *path;
 @property (readonly, nonatomic) BOOL isEOF;
 @property (readwrite,nonatomic) CGFloat position;
@@ -107,6 +108,7 @@ typedef BOOL(^KxMovieDecoderInterruptCallback)();
 @property (readonly, nonatomic) CGFloat startTime;
 @property (readwrite, nonatomic) BOOL disableDeinterlacing;
 @property (readwrite, nonatomic, strong) KxMovieDecoderInterruptCallback interruptCallback;
+@property (readonly, nonatomic) NSUInteger streamWidth;
 
 + (id) movieDecoderWithContentPath: (NSString *) path
                              error: (NSError **) perror;
@@ -123,7 +125,6 @@ typedef BOOL(^KxMovieDecoderInterruptCallback)();
 @end
 
 @interface KxMovieSubtitleASSParser : NSObject
-
 + (NSArray *) parseEvents: (NSString *) events;
 + (NSArray *) parseDialogue: (NSString *) dialogue
                   numFields: (NSUInteger) numFields;

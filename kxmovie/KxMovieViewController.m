@@ -16,10 +16,21 @@
 #import "KxAudioManager.h"
 #import "KxMovieGLView.h"
 #import "KxLogger.h"
+#import "StreamInfoContainer.h"
+#import "GCDAsyncUdpSocket.h"
+//#import "UdpEchoClient/ViewController.h"
+
 
 NSString * const KxMovieParameterMinBufferedDuration = @"KxMovieParameterMinBufferedDuration";
 NSString * const KxMovieParameterMaxBufferedDuration = @"KxMovieParameterMaxBufferedDuration";
 NSString * const KxMovieParameterDisableDeinterlacing = @"KxMovieParameterDisableDeinterlacing";
+
+    long tag;
+    GCDAsyncUdpSocket *udpSocket;
+    
+   // NSMutableString *log;
+
+
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -215,6 +226,8 @@ static NSMutableDictionary * gHistory;
 
 - (void)loadView
 {
+    
+    NSLog(@"I AM IN LOADVIEW");
     // LoggerStream(1, @"loadView");
     CGRect bounds = [[UIScreen mainScreen] applicationFrame];
     
@@ -257,9 +270,9 @@ _messageLabel.hidden = YES;
     _topBar.autoresizingMask = UIViewAutoresizingFlexibleWidth;
     _bottomBar.autoresizingMask = UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleWidth;
 
-    [self.view addSubview:_topBar];
-    [self.view addSubview:_topHUD];
-    [self.view addSubview:_bottomBar];
+   // [self.view addSubview:_topBar];
+   // [self.view addSubview:_topHUD];
+   // [self.view addSubview:_bottomBar];
 
     // top hud
 
@@ -398,6 +411,8 @@ _messageLabel.hidden = YES;
 {
     // LoggerStream(1, @"viewDidAppear");
     
+    NSLog(@"I AM IN VIEWDIDAPPEAR");
+    
     [super viewDidAppear:animated];
         
     if (self.presentingViewController)
@@ -418,6 +433,21 @@ _messageLabel.hidden = YES;
 
         [_activityIndicatorView startAnimating];
     }
+    
+    
+    
+    //begin copy
+    
+    
+    if (udpSocket == nil)
+    {
+        [self setupSocket];
+    }
+    
+  
+    //end copy
+    
+    
    
         
     [[NSNotificationCenter defaultCenter] addObserver:self
@@ -425,6 +455,44 @@ _messageLabel.hidden = YES;
                                                  name:UIApplicationWillResignActiveNotification
                                                object:[UIApplication sharedApplication]];
 }
+
+
+//copy
+
+- (void)setupSocket
+{
+    // Setup our socket.
+    // The socket will invoke our delegate methods using the usual delegate paradigm.
+    // However, it will invoke the delegate methods on a specified GCD delegate dispatch queue.
+    //
+    // Now we can configure the delegate dispatch queues however we want.
+    // We could simply use the main dispatc queue, so the delegate methods are invoked on the main thread.
+    // Or we could use a dedicated dispatch queue, which could be helpful if we were doing a lot of processing.
+    //
+    // The best approach for your application will depend upon convenience, requirements and performance.
+    //
+    // For this simple example, we're just going to use the main thread.
+    
+    udpSocket = [[GCDAsyncUdpSocket alloc] initWithDelegate:self delegateQueue:dispatch_get_main_queue()];
+    
+    NSError *error = nil;
+    
+    if (![udpSocket bindToPort:0 error:&error])
+    {
+        //[self logError:FORMAT(@"Error binding: %@", error)];
+        return;
+    }
+    if (![udpSocket beginReceiving:&error])
+    {
+        //[self logError:FORMAT(@"Error receiving: %@", error)];
+        return;
+    }
+    
+//    [self logInfo:@"Ready"];
+}
+
+
+
 
 - (void) viewWillDisappear:(BOOL)animated
 {    
@@ -470,10 +538,162 @@ _messageLabel.hidden = YES;
     LoggerStream(1, @"applicationWillResignActive");
 }
 
+
+
+
+
 #pragma mark - gesture recognizer
+
+
+
+
+
+struct sdlmsg *sdlmsg_mousekey(struct sdlmsg *msg, char msgtype, char is_pressed, unsigned short mousex, unsigned short mousey) {
+    //ga_error("sdl client: button event btn=%u pressed=%u\n", button, pressed);
+    bzero(msg, sizeof(struct sdlmsg));
+    msg->msgsize = htons(sizeof(struct sdlmsg));
+    msg->msgtype = msgtype;
+    msg->is_pressed = is_pressed; //1 heisst pressed
+    msg->mousebutton = 1; //1 heisst SDL_BUTTON_LEFT
+    msg->mousex = htons(mousex);
+    msg->mousey = htons(mousey);
+    msg->mouseRelX = htons(mousex);
+    msg->mouseRelY = htons(mousey);
+    
+    return msg;
+}
+
+struct sdlmsg {
+    unsigned short msgsize;		// size of this data-structure
+    // every message MUST start from a
+    // unsigned short message size
+    // the size includes the 'msgsize'
+    unsigned char msgtype;
+    unsigned char which;
+    unsigned char is_pressed;	// for keyboard/mousekey
+    unsigned char mousebutton;	// mouse button
+    unsigned char mousestate;	// mouse state - key combinations for motion
+    //unsigned char unused1[2];		// padding - 3+1 chars
+    //unsigned short scancode;	// keyboard scan code
+    //int sdlkey;			// SDLKey value
+    //unsigned int unicode;		// unicode or ASCII value
+    
+    //unsigned short sdlmod;		// SDLMod value
+    unsigned char relativeMouseMode;// relative mouse mode?
+    unsigned short mousex;		// mouse position (big-endian)
+    unsigned short mousey;		// mouse position (big-endian)
+    unsigned short mouseRelX;	// mouse relative position (big-endian)
+    unsigned short mouseRelY;	// mouse relative position (big-endian)
+    
+    //    unsigned char padding[8];	// reserved padding
+};
+
+
+
+- (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
+    
+    CGRect screenBounds = [[UIScreen mainScreen] bounds];
+    NSLog(@"resolution height: %f", screenBounds.size.height);
+    NSLog(@"resolution width: %f", screenBounds.size.width);
+    
+    float resY = screenBounds.size.height;
+    float resX = screenBounds.size.width;
+    
+    NSLog(@"STREAM WIDTH IS: %f", [StreamInfoContainer getWidth]);
+    NSLog(@"STREAM HEIGHT IS: %f", [StreamInfoContainer getHeight]);
+
+    
+    
+    [StreamInfoContainer test];
+    
+    
+    UITouch *touched = [[event allTouches] anyObject];
+    CGPoint location = [touched locationInView:touched.view];
+    
+   // NSUInteger copiedStreamWidth = self.streamWidth;
+    //NSLog(@"StreamWidth = %i", streamWidth);
+    
+    
+    int intRelX = location.x/resX*[StreamInfoContainer getWidth];
+    int intRelY = location.y/resY*[StreamInfoContainer getHeight];
+    
+
+    [self send:intRelX:intRelY];
+    
+//    [ViewController send:intRelX :intRelY];
+//    [ViewController]
+    
+//    [ViewController send];
+    
+
+    
+  //  ViewController.sendmsg(<#int#>, <#const struct msghdr *#>, <#int#>)
+    
+ //   ViewController.send(<#int#>, <#const void *#>, <#size_t#>, <#int#>) (send:intRelX :intRelY
+    
+}
+
+
+
+
+
+- (void)send:(int)XCoord
+            :(int)YCoord {
+    
+    NSString *host = @"gl.justus.berlin";
+    if ([host length] == 0)
+    {
+    //    [self logError:@"Address required"];
+        NSLog(@"host problem");
+        return;
+    }
+    
+    int port = 8555;
+    if (port <= 0 || port > 65535)
+    {
+        NSLog(@"port problem");
+    //    [self logError:@"Valid port required"];
+        return;
+    }
+    
+    //NSString *msg = messageField.text;
+    
+    
+    NSLog(@"FINE");
+    
+    struct sdlmsg message;        /* Declare Book1 of type Book */
+    
+    
+    //NSLog(@"MouseX Values: %d\n", sdlmsg_mousekey(&message)->mousex);
+    NSData *data;
+    
+    sdlmsg_mousekey(&message, 3, 0, XCoord, YCoord);
+    data = [NSData dataWithBytes:&message length:sizeof(message)];
+    [udpSocket sendData:data toHost:host port:port withTimeout:-1 tag:tag];
+    tag++;
+    
+    sdlmsg_mousekey(&message, 2, 1, XCoord, YCoord);
+    data = [NSData dataWithBytes:&message length:sizeof(message)];
+    [udpSocket sendData:data toHost:host port:port withTimeout:-1 tag:tag];
+    tag++;
+    
+    sdlmsg_mousekey(&message, 2, 0, XCoord, YCoord);
+    data = [NSData dataWithBytes:&message length:sizeof(message)];
+    [udpSocket sendData:data toHost:host port:port withTimeout:-1 tag:tag];
+    tag++;
+    
+    NSLog(@"I WAS SENT");
+    
+    
+}
+
+
+
 
 - (void) handleTap: (UITapGestureRecognizer *) sender
 {
+    
+    NSLog(@"handleTap");
     if (sender.state == UIGestureRecognizerStateEnded) {
         
         if (sender == _tapGestureRecognizer) {
@@ -495,6 +715,10 @@ _messageLabel.hidden = YES;
 
 - (void) handlePan: (UIPanGestureRecognizer *) sender
 {
+    NSLog(@"handlePan");
+
+    
+    
     if (sender.state == UIGestureRecognizerStateEnded) {
         
         const CGPoint vt = [sender velocityInView:self.view];
@@ -849,9 +1073,9 @@ _messageLabel.hidden = YES;
                                 
                                 memset(outData, 0, numFrames * numChannels * sizeof(float));
 #ifdef DEBUG
-                                LoggerStream(0, @"desync audio (outrun) wait %.4f %.4f", _moviePosition, frame.position);
-                                _debugAudioStatus = 1;
-                                _debugAudioStatusTS = [NSDate date];
+                                //LoggerStream(0, @"desync audio (outrun) wait %.4f %.4f", _moviePosition, frame.position);
+                                //_debugAudioStatus = 1;
+                                //_debugAudioStatusTS = [NSDate date];
 #endif
                                 break; // silence and exit
                             }
@@ -1075,7 +1299,7 @@ _messageLabel.hidden = YES;
             if (_decoder.isEOF) {
                 
                 [self pause];
-                [self updateHUD];
+               // [self updateHUD];
                 return;
             }
             
@@ -1101,7 +1325,7 @@ _messageLabel.hidden = YES;
     }
     
     if ((_tickCounter++ % 3) == 0) {
-        [self updateHUD];
+        //[self updateHUD];
     }
 }
 
@@ -1292,6 +1516,7 @@ _messageLabel.hidden = YES;
 
 - (void) updateHUD
 {
+    NSLog(@"IAM IN UPDATEHUD");
     if (_disableUpdateHUD)
         return;
     
@@ -1428,7 +1653,7 @@ _messageLabel.hidden = YES;
                     [strongSelf enableUpdateHUD];
                     [strongSelf setMoviePositionFromDecoder];
                     [strongSelf presentFrame];
-                    [strongSelf updateHUD];
+                 //   [strongSelf updateHUD];
                 }
             });
         }        

@@ -40,6 +40,8 @@ NSString *const vertexShaderString = SHADER_STRING
  }
 );
 
+
+
 NSString *const rgbFragmentShaderString = SHADER_STRING
 (
  varying highp vec2 v_texcoord;
@@ -60,6 +62,7 @@ NSString *const yuvFragmentShaderString = SHADER_STRING
  
  void main()
  {
+     NSLog(@"I AM IN MAIN");
      highp float y = texture2D(s_texture_y, v_texcoord).r;
      highp float u = texture2D(s_texture_u, v_texcoord).r - 0.5;
      highp float v = texture2D(s_texture_v, v_texcoord).r - 0.5;
@@ -374,6 +377,8 @@ enum {
              decoder: (KxMovieDecoder *) decoder
 {
     self = [super initWithFrame:frame];
+    NSLog(@"Inited");
+
     if (self) {
         
         _decoder = decoder;

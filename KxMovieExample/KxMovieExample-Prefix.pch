@@ -19,7 +19,7 @@
 #define DEBUG_AUTOPLAY
 
 
-
+/*
 // Which logger system to use NSLogger or NSLog.
 #define USE_NSLOGGER
 
@@ -33,3 +33,4 @@
 #    define LoggerApp(...)          while(0) {}
 #endif
 
+*/

@@ -94,6 +94,8 @@
     
     [self reloadMovies];
     [self.tableView reloadData];
+    
+    NSLog(@"IAM IN VIEWWILLAPPEAR");
 }
 
 - (void) reloadMovies
@@ -213,6 +215,9 @@
     NSString *path;
     NSMutableDictionary *parameters = [NSMutableDictionary dictionary];
     
+    NSLog(@"KXMOVIEVC SELECTED");
+
+    
     if (indexPath.section == 0) {
         
         if (indexPath.row >= _remoteMovies.count) return;
@@ -241,7 +246,7 @@
     [self presentViewController:vc animated:YES completion:nil];
     //[self.navigationController pushViewController:vc animated:YES];    
 
-    LoggerApp(1, @"Playing a movie: %@", path);
+//    LoggerApp(1, @"Playing a movie: %@", path);
 }
 
 @end

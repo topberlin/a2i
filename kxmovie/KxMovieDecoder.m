@@ -10,6 +10,7 @@
 //  KxMovie is licenced under the LGPL v3, see lgpl-3.0.txt
 
 #import "KxMovieDecoder.h"
+#import "KxMovieViewController.h"
 #import <Accelerate/Accelerate.h>
 #include "libavformat/avformat.h"
 #include "libswscale/swscale.h"
@@ -17,10 +18,16 @@
 #include "libavutil/pixdesc.h"
 #import "KxAudioManager.h"
 #import "KxLogger.h"
+#import "StreamInfoContainer.h"
+
 
 ////////////////////////////////////////////////////////////////////////////////
 NSString * kxmovieErrorDomain = @"ru.kolyvan.kxmovie";
+NSUInteger*  streamWidth = 0;
 static void FFLog(void* context, int level, const char* format, va_list args);
+
+
+
 
 static NSError * kxmovieError (NSInteger code, id info)
 {
@@ -443,6 +450,7 @@ static int interrupt_callback(void *ctx);
 @dynamic videoStreamFormatName;
 @dynamic startTime;
 
+
 - (CGFloat) duration
 {
     if (!_formatCtx)
@@ -477,8 +485,10 @@ static int interrupt_callback(void *ctx);
 
 - (NSUInteger) frameWidth
 {
+    
     return _videoCodecCtx ? _videoCodecCtx->width : 0;
 }
+
 
 - (NSUInteger) frameHeight
 {
@@ -862,11 +872,60 @@ static int interrupt_callback(void *ctx);
                 self.frameHeight,
                 _fps,
                 _videoTimeBase);
+    [StreamInfoContainer setWidth:self.frameWidth];
+    [StreamInfoContainer setHeight:self.frameHeight];
+
+    [StreamInfoContainer test];
+    NSLog(@"INFOOOOOOO: %lu", (unsigned long)self.frameWidth);
+    //StreamInfoContainer *sharedManager = [StreamInfoContainer sharedManager];
+   // sharedManager.width = self.frameWidth;
+    
+    //KxMovieViewController.streamWidth =  self.frameWidth;
+
+
     
     LoggerVideo(1, @"video start time %f", st->start_time * _videoTimeBase);
     LoggerVideo(1, @"video disposition %d", st->disposition);
     
     return kxMovieErrorNone;
+}
+
+
+- (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
+    
+    CGRect screenBounds = [[UIScreen mainScreen] bounds];
+    NSLog(@"IN KXMOVIEDECOER resolution height: %f", screenBounds.size.height);
+    NSLog(@"IN KXMOVIEDECOER resolution width: %f", screenBounds.size.width);
+    
+    float resY = screenBounds.size.height;
+    float resX = screenBounds.size.width;
+    
+    
+    
+    UITouch *touched = [[event allTouches] anyObject];
+    CGPoint location = [touched locationInView:touched.view];
+    
+    // NSUInteger copiedStreamWidth = self.streamWidth;
+    //NSLog(@"StreamWidth = %i", streamWidth);
+    
+    
+    int intRelX = location.x/resX*480;
+    int intRelY = location.y/resY*854;
+    
+    
+ //   [self send:100:100];
+    
+    //    [ViewController send:intRelX :intRelY];
+    //    [ViewController]
+    
+    //    [ViewController send];
+    
+    
+    
+    //  ViewController.sendmsg(<#int#>, <#const struct msghdr *#>, <#int#>)
+    
+    //   ViewController.send(<#int#>, <#const void *#>, <#size_t#>, <#int#>) (send:intRelX :intRelY
+    
 }
 
 - (kxMovieError) openAudioStream
